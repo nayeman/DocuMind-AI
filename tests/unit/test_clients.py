@@ -152,6 +152,31 @@ async def test_foundry_client_chat_and_embeddings() -> None:
 
 
 @pytest.mark.asyncio
+async def test_foundry_client_retry_on_rate_limit() -> None:
+    from openai import RateLimitError
+
+    mock_openai = AsyncMock()
+    mock_emb_item = MagicMock(embedding=[0.5] * 5, index=0)
+    mock_emb_res = MagicMock(data=[mock_emb_item])
+
+    # Fails first with RateLimitError, then succeeds on retry
+    mock_response = MagicMock(status_code=429, headers={})
+    rate_limit_err = RateLimitError("Rate limit exceeded", response=mock_response, body=None)
+    mock_openai.embeddings.create.side_effect = [rate_limit_err, mock_emb_res]
+
+    client = FoundryClient(
+        settings=Settings(
+            azure_openai_embedding_deployment="text-emb",
+        ),
+        client=mock_openai,
+    )
+
+    result = await client.get_embeddings_batch(["texto de prueba"])
+    assert len(result) == 1
+    assert mock_openai.embeddings.create.call_count == 2
+
+
+@pytest.mark.asyncio
 async def test_whatsapp_client_send_message(httpx_mock) -> None:  # type: ignore[no-untyped-def]
     settings = Settings(
         whatsapp_phone_number_id="12345",

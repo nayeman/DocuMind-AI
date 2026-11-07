@@ -47,7 +47,7 @@ class FoundryClient:
     @retry(
         stop=stop_after_attempt(_RETRY_ATTEMPTS),
         wait=wait_exponential(multiplier=1, min=_RETRY_WAIT_MIN_S, max=_RETRY_WAIT_MAX_S),
-        retry=retry_if_exception_type(OpenAIError),
+        retry=retry_if_exception_type((OpenAIError, FoundryClientError)),
         reraise=True,
     )
     async def chat_completion(
@@ -74,7 +74,7 @@ class FoundryClient:
     @retry(
         stop=stop_after_attempt(_RETRY_ATTEMPTS),
         wait=wait_exponential(multiplier=1, min=_RETRY_WAIT_MIN_S, max=_RETRY_WAIT_MAX_S),
-        retry=retry_if_exception_type(OpenAIError),
+        retry=retry_if_exception_type((OpenAIError, FoundryClientError)),
         reraise=True,
     )
     async def get_embedding(self, text: str) -> list[float]:
@@ -97,7 +97,7 @@ class FoundryClient:
     @retry(
         stop=stop_after_attempt(_RETRY_ATTEMPTS),
         wait=wait_exponential(multiplier=1, min=_RETRY_WAIT_MIN_S, max=_RETRY_WAIT_MAX_S),
-        retry=retry_if_exception_type(OpenAIError),
+        retry=retry_if_exception_type((OpenAIError, FoundryClientError)),
         reraise=True,
     )
     async def get_embeddings_batch(self, texts: list[str]) -> list[list[float]]:
