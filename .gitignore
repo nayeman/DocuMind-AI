@@ -84,7 +84,11 @@ crash.log
 crash.*.log
 *.tfvars
 *.auto.tfvars
+*.auto.tfvars.*
 *.tfvars.json
+backend.conf
+*.bak
+*.tfplan
 override.tf
 override.tf.json
 *_override.tf

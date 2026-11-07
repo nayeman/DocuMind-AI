@@ -409,3 +409,4 @@ az containerapp logs show \
 | Webhook 403 en Meta | HMAC signature inválido | Verificar que `whatsapp-app-secret` en KV coincide con el App Secret de Meta |
 | Webhook verify falla | Verify token no coincide | El valor en KV (`whatsapp-verify-token`) debe ser idéntico al configurado en Meta |
 | `az keyvault secret set` → 403 | Sin rol `Key Vault Secrets Officer` | Ejecutar el `az role assignment create` de la sección 4 |
+

@@ -65,27 +65,8 @@ variable "registry_identity_id" {
 }
 
 variable "agent_model" {
-  description = "Modelo usado por los agentes"
+  description = "Nombre del deployment de chat en Azure OpenAI"
   type        = string
-}
-
-variable "sources_file" {
-  description = "Ruta del archivo de fuentes de búsqueda"
-  type        = string
-  default     = "data/sources.yaml"
-}
-
-variable "linkedin_enabled" {
-  description = "Habilita el flujo de LinkedIn"
-  type        = bool
-  default     = false
-}
-
-variable "postgres_dsn" {
-  description = "DSN de PostgreSQL para el checkpointer; vacío si el servicio no usa Postgres"
-  type        = string
-  sensitive   = true
-  default     = ""
 }
 
 variable "secret_refs" {

@@ -206,8 +206,6 @@ module "container_apps" {
   registry_server            = module.acr.login_server
   registry_identity_id       = module.identity.id
   agent_model                = var.chat_model_name
-  linkedin_enabled           = false
-  postgres_dsn               = "not-used"
   secret_refs                = local.secret_refs
   optional_secret_envs       = local.optional_secret_envs
   optional_plain_envs        = local.optional_plain_envs

@@ -40,12 +40,12 @@ output "identity_client_id" {
 
 output "openai_chat_endpoint" {
   description = "Endpoint de la cuenta Azure OpenAI para chat"
-  value       = module.foundry_chat.endpoint
+  value       = module.foundry.endpoint
 }
 
 output "openai_embeddings_endpoint" {
   description = "Endpoint de la cuenta Azure OpenAI para embeddings"
-  value       = module.foundry_embeddings.endpoint
+  value       = module.foundry.endpoint
 }
 
 output "log_analytics_workspace_id" {

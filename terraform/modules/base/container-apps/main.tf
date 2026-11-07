@@ -36,11 +36,7 @@ resource "azurerm_container_app" "this" {
     identity = var.registry_identity_id
   }
 
-  secret {
-    name  = "postgres-dsn"
-    value = var.postgres_dsn
-  }
-
+  # ─── Secretos referenciados desde Key Vault (ningún valor hardcodeado) ────────
   dynamic "secret" {
     for_each = var.secret_refs
     content {
@@ -60,46 +56,7 @@ resource "azurerm_container_app" "this" {
       cpu    = var.container_cpu
       memory = var.container_memory
 
-      env {
-        name  = "AGENT_MODEL"
-        value = var.agent_model
-      }
-
-      env {
-        name  = "SOURCES_FILE"
-        value = var.sources_file
-      }
-
-      env {
-        name  = "LINKEDIN_ENABLED"
-        value = tostring(var.linkedin_enabled)
-      }
-
-      env {
-        name  = "APP_ENVIRONMENT"
-        value = "azure"
-      }
-
-      env {
-        name  = "WHATSAPP_REQUIRE_SIGNATURE"
-        value = "true"
-      }
-
-      env {
-        name  = "RUN_ENDPOINT_ENABLED"
-        value = "false"
-      }
-
-      env {
-        name        = "POSTGRES_DSN"
-        secret_name = "postgres-dsn"
-      }
-
-      env {
-        name  = "POSTGRES_REQUIRED"
-        value = "true"
-      }
-
+      # ─── Variables de entorno sensibles (referenciadas desde Key Vault) ───────
       dynamic "env" {
         for_each = var.optional_secret_envs
         content {
@@ -108,6 +65,7 @@ resource "azurerm_container_app" "this" {
         }
       }
 
+      # ─── Variables de entorno planas (endpoints, nombres, configuración) ──────
       dynamic "env" {
         for_each = var.optional_plain_envs
         content {
