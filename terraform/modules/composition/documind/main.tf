@@ -158,6 +158,7 @@ module "foundry" {
   model_version           = var.chat_model_version
   embedding_model_name    = var.embedding_model_name
   embedding_model_version = var.embedding_model_version
+  embedding_capacity      = var.embedding_capacity
   local_auth_enabled      = false
   tags = merge(local.base_tags, local.security_tags, {
     Description = "Azure OpenAI Foundry (${var.chat_model_name} + ${var.embedding_model_name}) — ${var.project_name} ${var.environment}"

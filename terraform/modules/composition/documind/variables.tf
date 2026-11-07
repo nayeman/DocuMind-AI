@@ -110,6 +110,12 @@ variable "alerts_enabled" {
   default     = false
 }
 
+variable "embedding_capacity" {
+  description = "Capacidad del deployment de embeddings"
+  type        = number
+  default     = 20
+}
+
 variable "alert_email" {
   description = "Correo del receptor de alertas de Azure Monitor; vacío impide crear alertas"
   type        = string

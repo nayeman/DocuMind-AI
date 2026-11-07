@@ -37,6 +37,7 @@ module "documind" {
   chat_model_version      = var.chat_model_version
   embedding_model_name    = var.embedding_model_name
   embedding_model_version = var.embedding_model_version
+  embedding_capacity      = var.embedding_capacity
 
   ai_search_sku            = var.ai_search_sku
   whatsapp_phone_number_id = var.whatsapp_phone_number_id

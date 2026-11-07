@@ -80,6 +80,12 @@ variable "embedding_model_version" {
   default     = "1"
 }
 
+variable "embedding_capacity" {
+  description = "Capacidad del deployment de embeddings"
+  type        = number
+  default     = 20
+}
+
 variable "ai_search_sku" {
   description = "SKU del servicio Azure AI Search"
   type        = string

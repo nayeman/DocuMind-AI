@@ -67,7 +67,7 @@ variable "embedding_model_version" {
 variable "embedding_capacity" {
   description = "Capacidad del deployment de embeddings"
   type        = number
-  default     = 1
+  default     = 20
 }
 
 variable "version_upgrade_option" {
