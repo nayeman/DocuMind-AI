@@ -1,0 +1,30 @@
+# terraform.tfvars.example — Entorno dev
+# Copia este archivo a terraform.tfvars y completa los valores.
+# NUNCA escribas tokens ni secrets en terraform.tfvars.
+
+environment  = "dev"
+project_name = "documind"
+owner_email  = "PLACEHOLDER — completar: correo del responsable"
+cost_center  = "PLACEHOLDER — completar: CC-XXXXXX"
+
+location            = "eastus"
+resource_group_name = "rg-documind"
+container_app_name  = "ca-documind"
+acr_name_prefix     = "documindacr"
+image_tag           = "PLACEHOLDER — completar: tag de la imagen Docker o dejar vacío"
+
+chat_model_name         = "gpt-4o"
+chat_model_version      = "2024-11-20"
+embedding_model_name    = "text-embedding-3-small"
+embedding_model_version = "1"
+
+ai_search_sku = "basic"
+
+# El phone number ID es público (no sensible). Los tokens van en Key Vault.
+whatsapp_phone_number_id = "PLACEHOLDER — completar: Phone Number ID de WhatsApp Cloud API"
+
+min_replicas = 1
+max_replicas = 1
+
+alerts_enabled = false
+alert_email    = ""
