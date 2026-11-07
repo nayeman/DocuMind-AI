@@ -1,4 +1,8 @@
+# .dockerignore permanece en raíz (requerimiento Docker: build context root)
+# Build: docker build -f docker/Dockerfile .
 .git
+# .dockerignore permanece en raíz (requerimiento Docker: build context root)
+# Build: docker build -f docker/Dockerfile .
 .gitignore
 .dockerignore
 .venv

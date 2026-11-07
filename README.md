@@ -81,6 +81,6 @@ uv run mypy src
 Build and run the multi-stage Docker container:
 
 ```bash
-docker build -t documind-ai:latest .
+docker build -f docker/Dockerfile -t documind-ai:latest .
 docker run -p 8000:8000 --env-file .env documind-ai:latest
 ```

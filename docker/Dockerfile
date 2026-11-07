@@ -1,20 +1,22 @@
+# Build with: docker build -f docker/Dockerfile .
+
 # Stage 1: Builder
-FROM python:3.12-slim AS builder
+FROM python:3.13-slim AS builder
 
 WORKDIR /app
 
 # Install uv package manager
 RUN pip install --no-cache-dir uv
 
-# Copy project specifications
-COPY pyproject.toml ./
+# Copy lockfile + spec for reproducible installs
+COPY pyproject.toml uv.lock ./
 
 # Create virtual environment and install production dependencies
 ENV UV_PROJECT_ENVIRONMENT="/app/.venv"
-RUN uv venv /app/.venv && uv pip install --no-cache -r pyproject.toml
+RUN uv venv /app/.venv && uv pip install --no-cache -r pyproject.toml --require-hashes
 
 # Stage 2: Runtime
-FROM python:3.12-slim AS runtime
+FROM python:3.13-slim AS runtime
 
 WORKDIR /app
 
