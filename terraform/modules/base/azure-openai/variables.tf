@@ -49,7 +49,7 @@ variable "model_version" {
 variable "capacity" {
   description = "Capacidad del deployment principal (unidades)"
   type        = number
-  default     = 1
+  default     = 20
 }
 
 variable "embedding_model_name" {

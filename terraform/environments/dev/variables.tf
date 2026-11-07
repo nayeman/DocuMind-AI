@@ -68,6 +68,12 @@ variable "chat_model_version" {
   default     = "2024-11-20"
 }
 
+variable "chat_capacity" {
+  description = "Capacidad del deployment de chat"
+  type        = number
+  default     = 20
+}
+
 variable "embedding_model_name" {
   description = "Nombre del deployment de embeddings en Azure OpenAI"
   type        = string

@@ -110,6 +110,12 @@ variable "alerts_enabled" {
   default     = false
 }
 
+variable "chat_capacity" {
+  description = "Capacidad del deployment de chat"
+  type        = number
+  default     = 20
+}
+
 variable "embedding_capacity" {
   description = "Capacidad del deployment de embeddings"
   type        = number

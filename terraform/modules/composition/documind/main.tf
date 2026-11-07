@@ -156,6 +156,7 @@ module "foundry" {
   custom_subdomain_name   = "aoai-documind-${local.suffix}"
   model_name              = var.chat_model_name
   model_version           = var.chat_model_version
+  capacity                = var.chat_capacity
   embedding_model_name    = var.embedding_model_name
   embedding_model_version = var.embedding_model_version
   embedding_capacity      = var.embedding_capacity

@@ -35,6 +35,7 @@ module "documind" {
 
   chat_model_name         = var.chat_model_name
   chat_model_version      = var.chat_model_version
+  chat_capacity           = var.chat_capacity
   embedding_model_name    = var.embedding_model_name
   embedding_model_version = var.embedding_model_version
   embedding_capacity      = var.embedding_capacity
