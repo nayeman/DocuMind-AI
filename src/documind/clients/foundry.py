@@ -14,6 +14,7 @@ _RETRY_ATTEMPTS = 3
 _RETRY_WAIT_MIN_S = 1
 _RETRY_WAIT_MAX_S = 10
 _DEFAULT_TEMPERATURE = 0.1
+_DEFAULT_MAX_TOKENS = 1000
 _COGNITIVE_SERVICES_SCOPE = "https://cognitiveservices.azure.com/.default"
 
 
@@ -51,7 +52,10 @@ class FoundryClient:
         reraise=True,
     )
     async def chat_completion(
-        self, messages: list[dict[str, str]], temperature: float = _DEFAULT_TEMPERATURE
+        self,
+        messages: list[dict[str, str]],
+        temperature: float = _DEFAULT_TEMPERATURE,
+        max_tokens: int = _DEFAULT_MAX_TOKENS,
     ) -> str:
         """Generate a chat response given prompt messages."""
         log = logger.bind(deployment=self._chat_deployment, message_count=len(messages))
@@ -62,6 +66,7 @@ class FoundryClient:
                 model=self._chat_deployment,
                 messages=messages,  # type: ignore[arg-type]
                 temperature=temperature,
+                max_tokens=max_tokens,
             )
             content = response.choices[0].message.content or ""
             usage_tokens = getattr(response.usage, "total_tokens", 0)
