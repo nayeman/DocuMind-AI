@@ -326,7 +326,9 @@ Desde la **raíz del proyecto**:
 ACR_SERVER=$(terraform output -raw acr_login_server)
 IMAGE_TAG=$(git rev-parse --short HEAD)   # o "v1.0.0"
 
+# NOTA: Si estás en macOS (Apple Silicon M1/M2/M3/M4), DEBES especificar --platform linux/amd64
 docker build \
+  --platform linux/amd64 \
   -f docker/Dockerfile \
   -t $ACR_SERVER/documind-api:$IMAGE_TAG \
   .
@@ -406,6 +408,9 @@ az containerapp logs show \
 |---|---|---|
 | `terraform apply` falla en Azure OpenAI | Cuota no aprobada | Solicitar acceso en [aka.ms/oai/access](https://aka.ms/oai/access) |
 | Container App queda en estado `Failed` | Imagen no encontrada en ACR | Verificar `image_tag` correcto y que `az acr login` fue exitoso |
+| `The container image does not provide a linux/amd64 variant` | Imagen construida en Mac (arm64) | Agregar `--platform linux/amd64` al comando `docker build` |
+| `ExpressKeyVaultSecretsNotSupported` | Suscripción Azure Student (express env) | Terraform lee los secretos de Key Vault vía data sources y los inyecta cifrados directamente en Container App |
+| `managed identity bootstrap failed` en ACR pull | Express env no soporta token pull de ACR con MSI | El módulo usa autenticación admin de ACR gestionada automáticamente en Terraform |
 | Webhook 403 en Meta | HMAC signature inválido | Verificar que `whatsapp-app-secret` en KV coincide con el App Secret de Meta |
 | Webhook verify falla | Verify token no coincide | El valor en KV (`whatsapp-verify-token`) debe ser idéntico al configurado en Meta |
 | `az keyvault secret set` → 403 | Sin rol `Key Vault Secrets Officer` | Ejecutar el `az role assignment create` de la sección 4 |
