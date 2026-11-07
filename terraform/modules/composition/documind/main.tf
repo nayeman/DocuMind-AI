@@ -191,10 +191,16 @@ resource "azurerm_role_assignment" "key_vault_secrets_user" {
   principal_id         = module.identity.principal_id
 }
 
-# ─── RBAC: Identity → AI Search (Search Index Data Contributor) ─────────────────
+# ─── RBAC: Identity → AI Search (Index Data Contributor + Service Contributor) ─
 resource "azurerm_role_assignment" "ai_search_contributor" {
   scope                = module.ai_search.id
   role_definition_name = "Search Index Data Contributor"
+  principal_id         = module.identity.principal_id
+}
+
+resource "azurerm_role_assignment" "ai_search_service_contributor" {
+  scope                = module.ai_search.id
+  role_definition_name = "Search Service Contributor"
   principal_id         = module.identity.principal_id
 }
 
@@ -240,6 +246,7 @@ module "container_apps" {
     azurerm_role_assignment.acr_pull,
     azurerm_role_assignment.key_vault_secrets_user,
     azurerm_role_assignment.ai_search_contributor,
+    azurerm_role_assignment.ai_search_service_contributor,
     azurerm_role_assignment.storage_blob_contributor,
     azurerm_role_assignment.openai_user,
   ]
