@@ -1,7 +1,5 @@
 """DocuMind AI — FastAPI Application Entrypoint."""
 
-import logging
-import sys
 import time
 from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
@@ -14,31 +12,11 @@ from fastapi.responses import JSONResponse
 
 from documind import __version__
 from documind.api.whatsapp_webhook import router as whatsapp_router
+from documind.config.logging import configure_logging
 from documind.config.settings import get_settings
 
 _LATENCY_MS_MULTIPLIER = 1000
 _LATENCY_MS_PRECISION = 2
-
-
-def configure_logging(log_level: str = "INFO") -> None:
-    """Configure structured JSON logging for the application and standard library."""
-    level = getattr(logging, log_level.upper(), logging.INFO)
-    logging.basicConfig(format="%(message)s", stream=sys.stdout, level=level)
-
-    structlog.configure(
-        processors=[
-            structlog.contextvars.merge_contextvars,
-            structlog.processors.add_log_level,
-            structlog.processors.StackInfoRenderer(),
-            structlog.dev.set_exc_info,
-            structlog.processors.TimeStamper(fmt="iso"),
-            structlog.processors.JSONRenderer(),
-        ],
-        wrapper_class=structlog.make_filtering_bound_logger(level),
-        context_class=dict,
-        logger_factory=structlog.PrintLoggerFactory(),
-        cache_logger_on_first_use=True,
-    )
 
 
 @asynccontextmanager
