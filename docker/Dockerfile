@@ -5,26 +5,28 @@ FROM python:3.13-slim AS builder
 
 WORKDIR /app
 
-# Install uv package manager
-RUN pip install --no-cache-dir uv
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Copy lockfile + spec for reproducible installs
+# Copy lockfile + spec para installs reproducibles desde uv.lock
 COPY pyproject.toml uv.lock ./
 
-# Create virtual environment and install production dependencies
-ENV UV_PROJECT_ENVIRONMENT="/app/.venv"
-RUN uv venv /app/.venv && uv pip install --no-cache -r pyproject.toml --require-hashes
+# Instalar solo dependencias de producción usando el lockfile (hashes incluidos)
+RUN uv sync --frozen --no-dev --no-install-project
 
 # Stage 2: Runtime
 FROM python:3.13-slim AS runtime
 
 WORKDIR /app
 
+# Install uv en runtime (para poder ejecutar uvicorn desde el venv)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
 # Create non-root user
 RUN groupadd -g 1001 appgroup && \
     useradd -u 1001 -g appgroup -m -s /bin/bash appuser
 
-# Copy virtual environment and application code
+# Copiar el venv del builder y el código fuente
 COPY --from=builder /app/.venv /app/.venv
 COPY src /app/src
 
@@ -32,7 +34,8 @@ COPY src /app/src
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONPATH="/app/src" \
     PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    UV_PROJECT_ENVIRONMENT="/app/.venv"
 
 # Change ownership to appuser
 RUN chown -R appuser:appgroup /app
