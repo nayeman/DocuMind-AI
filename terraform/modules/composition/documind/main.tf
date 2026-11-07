@@ -5,26 +5,22 @@ locals {
 
   image = var.image_tag != "" ? "${module.acr.login_server}/documind-api:${var.image_tag}" : ""
 
-  # ─── Secretos de Key Vault (siempre presentes; se crean manualmente o por pipeline) ───
-  required_secret_names = toset([
-    "whatsapp-access-token",
-    "whatsapp-app-secret",
-    "whatsapp-verify-token",
-  ])
-
-  secret_refs = {
-    for name in local.required_secret_names :
-    name => "${module.key_vault.vault_uri}secrets/${name}"
+  # ─── Secretos: valores directos leídos desde Key Vault por Terraform ──────────
+  # (Azure express environments no soportan KV URI references en Container Apps)
+  direct_secret_values = {
+    "whatsapp-access-token" = data.azurerm_key_vault_secret.whatsapp_access_token.value
+    "whatsapp-app-secret"   = data.azurerm_key_vault_secret.whatsapp_app_secret.value
+    "whatsapp-verify-token" = data.azurerm_key_vault_secret.whatsapp_verify_token.value
   }
 
-  # ─── Variables de entorno mapeadas a secretos de Key Vault ───
+  # ─── Variables de entorno mapeadas a secretos internos del Container App ──────
   optional_secret_envs = {
-    WHATSAPP_ACCESS_TOKEN = "whatsapp-access-token"
-    WHATSAPP_APP_SECRET   = "whatsapp-app-secret"
-    WHATSAPP_VERIFY_TOKEN = "whatsapp-verify-token"
+    WHATSAPP_ACCESS_TOKEN         = "whatsapp-access-token"
+    WHATSAPP_APP_SECRET           = "whatsapp-app-secret"
+    WHATSAPP_WEBHOOK_VERIFY_TOKEN = "whatsapp-verify-token"
   }
 
-  # ─── Variables de entorno planas (se omiten si están vacías) ───
+  # ─── Variables de entorno planas (se omiten si están vacías) ─────────────────
   optional_plain_envs = {
     for name, value in {
       AZURE_CLIENT_ID                   = module.identity.client_id
@@ -60,6 +56,27 @@ resource "random_string" "kv_suffix" {
 # ─── Data source del tenant actual ──────────────────────────────────────────────
 data "azurerm_client_config" "current" {}
 
+# ─── Secretos de WhatsApp leídos desde Key Vault ────────────────────────────────
+# Se leen aquí y se pasan como valores directos al Container App
+# (Azure Student suscripción no soporta KV URI references en Container Apps)
+data "azurerm_key_vault_secret" "whatsapp_access_token" {
+  name         = "whatsapp-access-token"
+  key_vault_id = module.key_vault.id
+  depends_on   = [module.key_vault]
+}
+
+data "azurerm_key_vault_secret" "whatsapp_app_secret" {
+  name         = "whatsapp-app-secret"
+  key_vault_id = module.key_vault.id
+  depends_on   = [module.key_vault]
+}
+
+data "azurerm_key_vault_secret" "whatsapp_verify_token" {
+  name         = "whatsapp-verify-token"
+  key_vault_id = module.key_vault.id
+  depends_on   = [module.key_vault]
+}
+
 # ─── Resource Group ─────────────────────────────────────────────────────────────
 module "resource_group" {
   source = "../../base/resource-group"
@@ -76,6 +93,7 @@ module "acr" {
   name                = "${var.acr_name_prefix}${local.suffix}"
   resource_group_name = module.resource_group.name
   location            = module.resource_group.location
+  admin_enabled       = true
   tags                = local.base_tags
 }
 
@@ -204,9 +222,11 @@ module "container_apps" {
   location                   = module.resource_group.location
   image                      = local.image
   registry_server            = module.acr.login_server
+  registry_username          = module.acr.admin_username
+  registry_password          = module.acr.admin_password
   registry_identity_id       = module.identity.id
   agent_model                = var.chat_model_name
-  secret_refs                = local.secret_refs
+  direct_secret_values       = local.direct_secret_values
   optional_secret_envs       = local.optional_secret_envs
   optional_plain_envs        = local.optional_plain_envs
   min_replicas               = var.min_replicas

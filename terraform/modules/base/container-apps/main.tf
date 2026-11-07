@@ -32,17 +32,26 @@ resource "azurerm_container_app" "this" {
   }
 
   registry {
-    server   = var.registry_server
-    identity = var.registry_identity_id
+    server               = var.registry_server
+    username             = var.registry_username
+    password_secret_name = var.registry_password != null ? "acr-password" : null
+    identity             = var.registry_password != null ? null : var.registry_identity_id
   }
 
-  # ─── Secretos referenciados desde Key Vault (ningún valor hardcodeado) ────────
   dynamic "secret" {
-    for_each = var.secret_refs
+    for_each = var.registry_password != null ? [1] : []
     content {
-      name                = secret.key
-      key_vault_secret_id = secret.value
-      identity            = var.registry_identity_id
+      name  = "acr-password"
+      value = var.registry_password
+    }
+  }
+
+  # ─── Secretos: valores directos leídos desde KV vía Terraform data source ─────
+  dynamic "secret" {
+    for_each = var.direct_secret_values
+    content {
+      name  = secret.key
+      value = secret.value
     }
   }
 
@@ -83,7 +92,7 @@ resource "azurerm_container_app" "this" {
       readiness_probe {
         transport = "HTTP"
         port      = var.ingress_port
-        path      = "/ready"
+        path      = "/health"
       }
     }
   }

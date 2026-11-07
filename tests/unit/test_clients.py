@@ -153,16 +153,19 @@ async def test_foundry_client_chat_and_embeddings() -> None:
 
 @pytest.mark.asyncio
 async def test_whatsapp_client_send_message(httpx_mock) -> None:  # type: ignore[no-untyped-def]
+    settings = Settings(
+        whatsapp_phone_number_id="12345",
+        whatsapp_access_token="secret_token",
+        whatsapp_api_version="v20.0",
+    )
     httpx_mock.add_response(
-        url="https://graph.facebook.com/v20.0/12345/messages",
+        url=f"https://graph.facebook.com/{settings.whatsapp_api_version}/12345/messages",
         method="POST",
         json={"messages": [{"id": "wamid.123"}]},
         status_code=200,
     )
 
-    client = WhatsAppClient(
-        settings=Settings(whatsapp_phone_number_id="12345", whatsapp_access_token="secret_token")
-    )
+    client = WhatsAppClient(settings=settings)
     result = await client.send_text_message(to="+573001112233", body="Hola mundo")
     assert "messages" in result
 

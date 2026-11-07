@@ -59,6 +59,19 @@ variable "registry_server" {
   type        = string
 }
 
+variable "registry_username" {
+  description = "Usuario admin para autenticación con el ACR"
+  type        = string
+  default     = null
+}
+
+variable "registry_password" {
+  description = "Contraseña admin para autenticación con el ACR"
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
 variable "registry_identity_id" {
   description = "ID de la identidad administrada con permiso AcrPull"
   type        = string
@@ -69,10 +82,11 @@ variable "agent_model" {
   type        = string
 }
 
-variable "secret_refs" {
-  description = "Mapa nombre de secreto->URI de Key Vault"
+variable "direct_secret_values" {
+  description = "Mapa nombre de secreto -> valor directo (compatible con express environments)"
   type        = map(string)
   default     = {}
+  sensitive   = true
 }
 
 variable "optional_secret_envs" {
