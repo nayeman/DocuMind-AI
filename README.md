@@ -35,8 +35,8 @@ flowchart LR
     Meta -->|Webhook HTTPS HMAC-SHA256| ACA[Azure Container Apps\nFastAPI Backend]
     
     subgraph Azure Cloud
-        ACA -->|Almacenamiento Temporal| Blob[Azure Blob Storage\nCiclo de vida: 24h]
-        ACA -->|Vectores & Filtrado| Search[Azure AI Search\nHNSW + Purga 24h]
+        ACA -->|Almacenamiento| Blob[Azure Blob Storage]
+        ACA -->|Vectores & Filtrado| Search[Azure AI Search\nHNSW]
         ACA -->|Chat & Embeddings| OpenAI[Azure OpenAI\ngpt-4o / text-embedding-3-small]
         ACA -.->|Secretos| KV[Azure Key Vault]
         ACA -.->|Identidad sin claves| MSI[Managed Identity]
@@ -47,8 +47,8 @@ flowchart LR
 - **Backend Core:** Python 3.13+, FastAPI, Pydantic v2, `uv`.
 - **Procesamiento de Documentos:** `pypdf`, `python-docx`, `tiktoken` (chunking adaptativo).
 - **Embeddings & LLM:** Microsoft Foundry / Azure OpenAI (`text-embedding-3-small`, `gpt-4o`).
-- **Búsqueda Vectorial:** Azure AI Search con índice HNSW y filtrado por usuario/retención.
-- **Almacenamiento:** Azure Blob Storage con regla de ciclo de vida de expiración a las 24 horas.
+- **Búsqueda Vectorial:** Azure AI Search con índice HNSW y filtrado por usuario.
+- **Almacenamiento:** Azure Blob Storage privado para documentos.
 - **Seguridad & Gobernanza:** Azure Key Vault, User Assigned Managed Identity (sin API keys hardcodeadas) y validación estricta HMAC-SHA256 de webhooks.
 
 ---
@@ -112,5 +112,5 @@ uv run mypy src tests
 ## 🔒 Seguridad y Privacidad
 
 - **Cero Secretos en Git:** Ningún token ni clave sensible se versiona en el repositorio.
-- **Retención Efímera de 24 Horas:** Tanto los archivos en Azure Blob Storage como los fragmentos vectorizados en Azure AI Search cuentan con políticas automáticas de expiración y purga tras 24 horas para garantizar la privacidad y optimizar costos.
+- **Retención de Documentos:** Los documentos y fragmentos indexados no tienen expiración automática.
 - **Autenticación Basada en Identidad:** El backend interactúa con los servicios de Azure mediante Managed Identities y roles RBAC de mínimo privilegio.
