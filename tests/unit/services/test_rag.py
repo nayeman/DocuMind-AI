@@ -1,6 +1,5 @@
 """Unit tests for RAGService using duck-typed test doubles."""
 
-import asyncio
 from typing import Any
 
 import pytest
@@ -60,35 +59,53 @@ def _make_service(
     foundry: Any = None,
     search: Any = None,
 ) -> RAGService:
-    return RAGService(
-        foundry=foundry or FakeFoundry(),  # type: ignore[arg-type]
-        search=search or FakeSearch(),  # type: ignore[arg-type]
+    f = foundry or FakeFoundry()
+    s = search or FakeSearch()
+    return RAGService(foundry=f, search=s)  # type: ignore[arg-type]
+
+
+@pytest.mark.asyncio
+async def test_rag_returns_answer_when_chunks_found() -> None:
+    service = _make_service()
+    answer = await service.answer(
+        question="¿De qué trata el documento?",
+        user_phone="+573001234567",
     )
+    assert answer == "respuesta de prueba"
 
 
-def test_rag_returns_answer_when_chunks_found() -> None:
-    service = _make_service(foundry=FakeFoundry(answer="La respuesta es 42."))
-    result = asyncio.run(service.answer("¿Cuál es la respuesta?", "+1234567890"))
-    assert result == "La respuesta es 42."
-
-
-def test_rag_returns_no_docs_message_when_store_empty() -> None:
-    service = _make_service(search=FakeSearch(chunks=[]))
-    result = asyncio.run(service.answer("¿Algo?", "+1234567890"))
-    assert "No encontré documentos" in result or "Por favor, envía" in result
-
-
-def test_rag_uses_fallback_chunks_below_threshold() -> None:
-    low_score_chunks = [{"filename": "doc.pdf", "page": 1, "text": "contexto", "score": 0.5}]
-    service = _make_service(
-        foundry=FakeFoundry(answer="Respuesta con chunks de baja relevancia."),
-        search=FakeSearch(chunks=low_score_chunks),
+@pytest.mark.asyncio
+async def test_rag_returns_no_docs_message_when_store_empty() -> None:
+    empty_search = FakeSearch(chunks=[])
+    service = _make_service(search=empty_search)
+    answer = await service.answer(
+        question="¿Qué dice el informe?",
+        user_phone="+573001234567",
     )
-    result = asyncio.run(service.answer("¿Algo?", "+1234567890"))
-    assert result == "Respuesta con chunks de baja relevancia."
+    assert "No encontré documentos relevantes" in answer
 
 
-def test_rag_raises_service_error_on_llm_failure() -> None:
+@pytest.mark.asyncio
+async def test_rag_uses_fallback_chunks_below_threshold() -> None:
+    low_score_chunks = [
+        {"filename": "doc.pdf", "page": 1, "text": "texto débil", "score": 0.40}
+    ]
+    search = FakeSearch(chunks=low_score_chunks)
+    foundry = FakeFoundry(answer="Respuesta generada con contexto disponible")
+    service = _make_service(foundry=foundry, search=search)
+
+    answer = await service.answer(
+        question="Pregunta poco relevante",
+        user_phone="+573001234567",
+    )
+    assert answer == "Respuesta generada con contexto disponible"
+
+
+@pytest.mark.asyncio
+async def test_rag_raises_service_error_on_llm_failure() -> None:
     service = _make_service(foundry=ErrorFoundry())
     with pytest.raises(RAGServiceError):
-        asyncio.run(service.answer("¿Algo?", "+1234567890"))
+        await service.answer(
+            question="¿Qué dice el documento?",
+            user_phone="+573001234567",
+        )

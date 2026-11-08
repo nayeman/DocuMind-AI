@@ -1,4 +1,4 @@
-"""Tests for TextExtractor document text extraction."""
+"""Unit tests for TextExtractor document text extraction."""
 
 import io
 
@@ -41,7 +41,6 @@ def test_pdf_extraction_basic() -> None:
     """Test basic PDF extraction using a synthetically created PDF."""
     extractor = TextExtractor()
 
-    # Create a small valid PDF using pypdf writer
     writer = pypdf.PdfWriter()
     writer.add_blank_page(width=200, height=200)
 
@@ -49,6 +48,5 @@ def test_pdf_extraction_basic() -> None:
     writer.write(buffer)
     pdf_bytes = buffer.getvalue()
 
-    # Empty blank page has no text, should return []
     result = extractor.extract(content=pdf_bytes, filename="blank.pdf")
     assert isinstance(result, list)

@@ -1,6 +1,5 @@
 """Unit tests for DocumentService using duck-typed test doubles."""
 
-import asyncio
 from typing import Any
 
 import pytest
@@ -73,49 +72,65 @@ class FakeFoundry:
     async def chat_completion(
         self, messages: list[dict[str, str]], temperature: float = 0.1
     ) -> str:
-        return ""
-
-
-_TXT_CONTENT = b"Este es el contenido del documento de prueba."
+        return "fake chat response"
 
 
 def _make_service(
-    media_bytes: bytes = _TXT_CONTENT,
-    max_file_size_mb: int = 20,
-) -> tuple[DocumentService, FakeSearch]:
-    store = FakeSearch()
-    settings = Settings(
-        max_file_size_mb=max_file_size_mb,
-        allowed_extensions=["pdf", "docx", "txt"],
-    )
+    settings: Settings | None = None,
+    media_bytes: bytes = b"contenido de prueba para documento",
+) -> tuple[DocumentService, FakeWhatsApp, FakeBlob, FakeSearch]:
+    cfg = settings or Settings(allowed_extensions=["pdf", "docx", "txt"], max_file_size_mb=20)
+    wa = FakeWhatsApp(media_bytes=media_bytes)
+    blob = FakeBlob()
+    search = FakeSearch()
+    foundry = FakeFoundry()
+    chunker = TextChunker(settings=cfg)
+    extractor = TextExtractor()
+
     service = DocumentService(
-        settings=settings,
-        whatsapp=FakeWhatsApp(media_bytes=media_bytes),  # type: ignore[arg-type]
-        storage=FakeBlob(),  # type: ignore[arg-type]
-        search=store,  # type: ignore[arg-type]
-        foundry=FakeFoundry(),  # type: ignore[arg-type]
-        chunker=TextChunker(chunk_size=50, chunk_overlap=5),
-        extractor=TextExtractor(),
+        settings=cfg,
+        whatsapp=wa,  # type: ignore[arg-type]
+        storage=blob,  # type: ignore[arg-type]
+        search=search,  # type: ignore[arg-type]
+        foundry=foundry,  # type: ignore[arg-type]
+        chunker=chunker,
+        extractor=extractor,
     )
-    return service, store
+    return service, wa, blob, search
 
 
-def test_process_txt_document_indexes_chunks() -> None:
-    service, store = _make_service(media_bytes=_TXT_CONTENT)
-    result = asyncio.run(service.process_document("media_123", "test.txt", "+1234567890"))
+@pytest.mark.asyncio
+async def test_process_txt_document_indexes_chunks() -> None:
+    service, _, _, search = _make_service(media_bytes=b"Este es un texto simple para indexar.")
+    result = await service.process_document(
+        media_id="media-001",
+        filename="archivo.txt",
+        user_phone="+573001234567",
+    )
     assert result["status"] == "indexed"
-    assert result["chunk_count"] >= 1
-    assert len(store.indexed_chunks) >= 1
+    assert result["chunk_count"] > 0
+    assert len(search.indexed_chunks) == result["chunk_count"]
 
 
-def test_process_document_rejects_unsupported_extension() -> None:
-    service, _ = _make_service()
+@pytest.mark.asyncio
+async def test_process_document_rejects_unsupported_extension() -> None:
+    service, _, _, _ = _make_service()
     with pytest.raises(UnsupportedFileExtensionError):
-        asyncio.run(service.process_document("media_123", "malware.exe", "+1234567890"))
+        await service.process_document(
+            media_id="media-002",
+            filename="malicioso.exe",
+            user_phone="+573001234567",
+        )
 
 
-def test_process_document_rejects_file_too_large() -> None:
-    big_content = b"x" * (2 * 1024 * 1024)
-    service, _ = _make_service(media_bytes=big_content, max_file_size_mb=1)
+@pytest.mark.asyncio
+async def test_process_document_rejects_file_too_large() -> None:
+    cfg = Settings(max_file_size_mb=1)
+    huge_bytes = b"x" * (2 * 1024 * 1024)
+    service, _, _, _ = _make_service(settings=cfg, media_bytes=huge_bytes)
     with pytest.raises(FileTooLargeError):
-        asyncio.run(service.process_document("media_123", "big.txt", "+1234567890"))
+        await service.process_document(
+            media_id="media-003",
+            filename="grande.txt",
+            user_phone="+573001234567",
+        )

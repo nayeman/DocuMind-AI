@@ -13,7 +13,7 @@ def configure_logging(log_level: str = "INFO") -> None:
         log_level: Desired log level string (e.g. 'DEBUG', 'INFO', 'WARNING', 'ERROR').
     """
     level = getattr(logging, log_level.upper(), logging.INFO)
-    logging.basicConfig(format="%(message)s", stream=sys.stdout, level=level)
+    logging.basicConfig(format="%(message)s", stream=sys.stdout, level=level, force=True)
 
     structlog.configure(
         processors=[

@@ -1,4 +1,4 @@
-"""Tests for TextChunker token-based splitting."""
+"""Unit tests for TextChunker token-based splitting."""
 
 from documind.config.settings import Settings
 from documind.processing.chunking import TextChunker
@@ -30,7 +30,6 @@ def test_chunk_id_format() -> None:
     settings = Settings(chunk_size=10, chunk_overlap=2)
     chunker = TextChunker(settings=settings)
 
-    # Large text generating multiple chunks
     large_text = " ".join(["palabra"] * 100)
     pages = [{"page": 1, "text": large_text}]
     doc_id = "doc-uuid-456"
@@ -63,7 +62,6 @@ def test_chunk_token_count_bounds() -> None:
 def test_chunk_empty_pages() -> None:
     """Test that empty or whitespace-only pages produce no chunks."""
     chunker = TextChunker()
-    pages = [{"page": 1, "text": ""}, {"page": 2, "text": "   "}]
-
-    chunks = chunker.chunk(pages=pages, document_id="empty-doc", filename="empty.txt")
+    pages = [{"page": 1, "text": "   "}, {"page": 2, "text": ""}]
+    chunks = chunker.chunk(pages=pages, document_id="doc-empty", filename="empty.pdf")
     assert chunks == []

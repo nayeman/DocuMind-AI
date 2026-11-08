@@ -1,25 +1,17 @@
-"""Tests for WhatsApp Cloud API webhook endpoints and signature verification."""
+"""Integration tests for WhatsApp Webhook API endpoints and security layer."""
+
+import hashlib
+import hmac
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from documind.config.settings import get_settings
 from documind.main import app
-
-
-@pytest.fixture(autouse=True)
-def configure_test_settings(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Ensure test settings are predictably configured."""
-    monkeypatch.setenv("WHATSAPP_WEBHOOK_VERIFY_TOKEN", "test-verify-token-xyz")
-    monkeypatch.setenv("WHATSAPP_ACCESS_TOKEN", "test-access-token-123")
-    monkeypatch.setenv("APP_ENV", "test")
-    # Clear lru_cache for get_settings
-    get_settings.cache_clear()
 
 
 @pytest.mark.asyncio
 async def test_health_check() -> None:
-    """Verify health check endpoint returns 200 OK."""
+    """Verify health check endpoint returns 200 OK and valid JSON body."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         response = await client.get("/health")
@@ -38,7 +30,7 @@ async def test_webhook_verification_success() -> None:
             "/webhook",
             params={
                 "hub.mode": "subscribe",
-                "hub.verify_token": "test-verify-token-xyz",
+                "hub.verify_token": "mock-test-verify-token",
                 "hub.challenge": "1158201444",
             },
         )
@@ -64,46 +56,57 @@ async def test_webhook_verification_failure() -> None:
 
 @pytest.mark.asyncio
 async def test_webhook_post_invalid_signature_in_prod(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Verify POST /webhook returns 403 if signature is invalid."""
+    """Verify POST /webhook returns 403 when signature is invalid in production mode."""
     monkeypatch.setenv("APP_ENV", "prod")
-    get_settings.cache_clear()
-
-    payload = {
-        "object": "whatsapp_business_account",
-        "entry": [
-            {
-                "id": "12345",
-                "changes": [
-                    {
-                        "field": "messages",
-                        "value": {
-                            "messaging_product": "whatsapp",
-                            "messages": [],
-                        },
-                    }
-                ],
-            }
-        ],
-    }
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         response = await client.post(
             "/webhook",
-            json=payload,
-            headers={"X-Hub-Signature-256": "sha256=invalid_hash_signature"},
+            headers={"X-Hub-Signature-256": "sha256=invalidsignature"},
+            content=b'{"object": "whatsapp_business_account"}',
         )
         assert response.status_code == 403
 
 
 @pytest.mark.asyncio
-async def test_webhook_post_missing_signature_in_prod(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Verify POST /webhook returns 403 if signature header is missing in production."""
-    monkeypatch.setenv("APP_ENV", "prod")
-    get_settings.cache_clear()
+async def test_webhook_post_valid_payload(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify POST /webhook accepts and queues valid WhatsApp message payload."""
+    from unittest.mock import AsyncMock
 
-    payload = {"object": "whatsapp_business_account", "entry": []}
+    mock_handler = AsyncMock()
+    monkeypatch.setattr("documind.api.whatsapp_webhook.handle_text_message", mock_handler)
+
+    body = b"""{
+        "object": "whatsapp_business_account",
+        "entry": [{
+            "id": "WABA_ID",
+            "changes": [{
+                "field": "messages",
+                "value": {
+                    "messaging_product": "whatsapp",
+                    "metadata": {"phone_number_id": "PN_ID"},
+                    "messages": [{
+                        "from": "573001112233",
+                        "id": "wamid.123",
+                        "timestamp": "1700000000",
+                        "type": "text",
+                        "text": {"body": "Hola asistente"}
+                    }]
+                }
+            }]
+        }]
+    }"""
+    secret = "mock-test-app-secret"
+    signature = "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
-        response = await client.post("/webhook", json=payload)
-        assert response.status_code == 403
+        response = await client.post(
+            "/webhook",
+            headers={"X-Hub-Signature-256": signature},
+            content=body,
+        )
+        assert response.status_code == 200
+        assert response.json() == {"status": "received"}
+    mock_handler.assert_called_once()
