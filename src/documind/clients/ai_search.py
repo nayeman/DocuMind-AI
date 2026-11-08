@@ -1,7 +1,6 @@
 """Azure AI Search client for vector indexing and similarity retrieval."""
 
 import asyncio
-from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
@@ -91,12 +90,6 @@ class AISearchClient:
                     vector_search_dimensions=self._embedding_dimensions,
                     vector_search_profile_name=_HNSW_PROFILE_NAME,
                 ),
-                SimpleField(
-                    name="created_at",
-                    type=SearchFieldDataType.DATE_TIME_OFFSET,
-                    filterable=True,
-                    sortable=True,
-                ),
             ]
 
             vector_search = VectorSearch(
@@ -125,7 +118,6 @@ class AISearchClient:
             log.warning("No chunks provided to index")
             return
 
-        now_iso = datetime.now(UTC).isoformat()
         documents = [
             {
                 "chunk_id": chunk["chunk_id"],
@@ -136,7 +128,6 @@ class AISearchClient:
                 "text": chunk["text"],
                 "token_count": int(chunk.get("token_count", 0)),
                 "embedding": chunk["embedding"],
-                "created_at": chunk.get("created_at") or now_iso,
             }
             for chunk in chunks
         ]
@@ -162,13 +153,7 @@ class AISearchClient:
         log.info("Executing vector search query")
 
         safe_phone = user_phone.replace("'", "''")
-        cutoff = datetime.now(UTC) - timedelta(
-            hours=self.settings.document_retention_hours
-        )
-        cutoff_iso = cutoff.strftime("%Y-%m-%dT%H:%M:%SZ")
-        filter_expr = (
-            f"user_phone eq '{safe_phone}' and (created_at ge {cutoff_iso} or created_at eq null)"
-        )
+        filter_expr = f"user_phone eq '{safe_phone}'"
 
         try:
             vector_query = VectorizedQuery(
@@ -207,31 +192,3 @@ class AISearchClient:
         except AzureError as exc:
             log.error("Failed vector search execution", exc_info=exc)
             raise AISearchError(f"Vector search failed: {exc}") from exc
-
-    async def delete_expired_chunks(self, max_age_hours: int | None = None) -> int:
-        """Delete chunks older than retention period from the search index."""
-        hours = max_age_hours or self.settings.document_retention_hours
-        cutoff = datetime.now(UTC) - timedelta(hours=hours)
-        cutoff_iso = cutoff.strftime("%Y-%m-%dT%H:%M:%SZ")
-        log = logger.bind(cutoff=cutoff_iso)
-        log.info("Purging expired chunks from Azure AI Search")
-
-        def _purge() -> int:
-            try:
-                results = self._search_client.search(
-                    search_text="*",
-                    filter=f"created_at lt {cutoff_iso}",
-                    select=["chunk_id"],
-                    top=1000,
-                )
-                to_delete = [{"chunk_id": item["chunk_id"]} for item in results]
-                if to_delete:
-                    self._search_client.delete_documents(documents=to_delete)
-                return len(to_delete)
-            except AzureError as exc:
-                log.warning("Failed to purge expired chunks from index", exc_info=exc)
-                return 0
-
-        deleted_count = await asyncio.to_thread(_purge)
-        log.info("Expired chunks purge completed", purged_count=deleted_count)
-        return deleted_count

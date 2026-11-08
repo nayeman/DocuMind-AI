@@ -100,11 +100,6 @@ class Settings(BaseSettings):
         default=["pdf", "docx", "txt"],
         description="Allowed document file extensions for ingestion",
     )
-    document_retention_hours: int = Field(
-        default=24,
-        description="Maximum retention time in hours for indexed documents before expiration",
-    )
-
     # --- RAG Configuration ---
     top_k_results: int = Field(
         default=5, description="Number of top relevant chunks to retrieve from AI Search"

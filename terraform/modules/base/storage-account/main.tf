@@ -12,21 +12,3 @@ resource "azurerm_storage_container" "documents" {
   storage_account_name  = azurerm_storage_account.this.name
   container_access_type = "private"
 }
-
-resource "azurerm_storage_management_policy" "lifecycle" {
-  storage_account_id = azurerm_storage_account.this.id
-
-  rule {
-    name    = "expire-documents-24h"
-    enabled = true
-    filters {
-      prefix_match = [var.container_name]
-      blob_types   = ["blockBlob"]
-    }
-    actions {
-      base_blob {
-        delete_after_days_since_modification_greater_than = 1
-      }
-    }
-  }
-}
