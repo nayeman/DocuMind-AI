@@ -7,11 +7,11 @@ locals {
 
   # ─── Secretos: valores directos leídos desde Key Vault por Terraform ──────────
   # (Azure express environments no soportan KV URI references en Container Apps)
-  direct_secret_values = {
-    "whatsapp-access-token" = data.azurerm_key_vault_secret.whatsapp_access_token.value
-    "whatsapp-app-secret"   = data.azurerm_key_vault_secret.whatsapp_app_secret.value
-    "whatsapp-verify-token" = data.azurerm_key_vault_secret.whatsapp_verify_token.value
-  }
+  direct_secret_values = var.image_tag != "" ? {
+    "whatsapp-access-token" = data.azurerm_key_vault_secret.whatsapp_access_token[0].value
+    "whatsapp-app-secret"   = data.azurerm_key_vault_secret.whatsapp_app_secret[0].value
+    "whatsapp-verify-token" = data.azurerm_key_vault_secret.whatsapp_verify_token[0].value
+  } : {}
 
   # ─── Variables de entorno mapeadas a secretos internos del Container App ──────
   optional_secret_envs = {
@@ -60,18 +60,21 @@ data "azurerm_client_config" "current" {}
 # Se leen aquí y se pasan como valores directos al Container App
 # (Azure Student suscripción no soporta KV URI references en Container Apps)
 data "azurerm_key_vault_secret" "whatsapp_access_token" {
+  count        = var.image_tag != "" ? 1 : 0
   name         = "whatsapp-access-token"
   key_vault_id = module.key_vault.id
   depends_on   = [module.key_vault]
 }
 
 data "azurerm_key_vault_secret" "whatsapp_app_secret" {
+  count        = var.image_tag != "" ? 1 : 0
   name         = "whatsapp-app-secret"
   key_vault_id = module.key_vault.id
   depends_on   = [module.key_vault]
 }
 
 data "azurerm_key_vault_secret" "whatsapp_verify_token" {
+  count        = var.image_tag != "" ? 1 : 0
   name         = "whatsapp-verify-token"
   key_vault_id = module.key_vault.id
   depends_on   = [module.key_vault]
