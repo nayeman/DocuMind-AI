@@ -38,6 +38,8 @@ async def test_ai_search_client_indexing_and_search() -> None:
 
     await client.ensure_index()
     mock_index_client.create_or_update_index.assert_called_once()
+    index = mock_index_client.create_or_update_index.call_args.args[0]
+    assert "created_at" not in {field.name for field in index.fields}
 
     chunks = [
         {
@@ -57,8 +59,4 @@ async def test_ai_search_client_indexing_and_search() -> None:
     assert len(results) == 1
     assert results[0]["chunk_id"] == "c1"
     assert results[0]["score"] == 0.95
-
-    purged = await client.delete_expired_chunks(max_age_hours=24)
-    assert purged == 1
-    mock_search_client.delete_documents.assert_called_once_with(documents=[{"chunk_id": "c1"}])
-
+    assert mock_search_client.search.call_args.kwargs["filter"] == "user_phone eq '+573001112233'"
