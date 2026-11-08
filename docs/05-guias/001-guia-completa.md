@@ -241,24 +241,20 @@ az keyvault secret list --vault-name $KV_NAME --query "[].name" -o tsv
 Como en desarrollo se utiliza el **Temporary Access Token** de Meta (que vence cada 24 horas en **WhatsApp → API Setup**), cámbialo rápidamente en cualquier momento ejecutando:
 
 ```bash
+cd terraform/environments/dev
+KV_NAME=$(terraform output -raw key_vault_name)
+
 az keyvault secret set \
-  --vault-name kv-documind-h2v7icnn \
+  --vault-name $KV_NAME \
   --name "whatsapp-access-token" \
   --value "<PEGA_AQUI_TU_NUEVO_TOKEN>"
 ```
 
 > [!TIP]
-> En entornos Express de Azure, los secretos se inyectan en tiempo de aprovisionamiento de Container App. Tras actualizar el token en Key Vault, aplica el cambio para refrescar la revisión:
+> En entornos Express de Azure Container Apps, los secretos de Key Vault se inyectan como variables de entorno seguras durante el aprovisionamiento. Tras actualizar el token en Key Vault, aplica el cambio para desplegar una nueva revisión activa con el token actualizado:
 > ```bash
 > cd terraform/environments/dev
 > terraform apply -auto-approve
-> ```
-> O también puedes reiniciar la revisión activa:
-> ```bash
-> az containerapp revision restart \
->   --name ca-documind \
->   --resource-group rg-documind \
->   --revision $(az containerapp revision list --name ca-documind --resource-group rg-documind --query "[0].name" -o tsv)
 > ```
 
 > [!CAUTION]
