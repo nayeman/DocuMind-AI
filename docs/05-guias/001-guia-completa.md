@@ -310,7 +310,7 @@ Como en desarrollo se utiliza el **Temporary Access Token** de Meta (que vence c
 
 ```bash
 az keyvault secret set \
-  --vault-name kv-documind-1inu5vh0 \
+  --vault-name kv-documind-kvb3zwhq \
   --name "whatsapp-access-token" \
   --value "<PEGA_AQUI_TU_NUEVO_TOKEN>"
 ```
