@@ -50,3 +50,4 @@ def test_pdf_extraction_basic() -> None:
 
     result = extractor.extract(content=pdf_bytes, filename="blank.pdf")
     assert isinstance(result, list)
+

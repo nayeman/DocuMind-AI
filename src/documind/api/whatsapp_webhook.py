@@ -68,19 +68,18 @@ async def receive_webhook(
         or settings.whatsapp_access_token
         or settings.whatsapp_webhook_verify_token
     )
-    if x_hub_signature_256:
-        if not verify_meta_signature(raw_body, x_hub_signature_256, app_secret):
-            if settings.app_env != "dev":
-                logger.error("Invalid X-Hub-Signature-256 header")
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Invalid signature",
-                )
-    elif settings.app_env != "dev":
-        logger.error("Missing X-Hub-Signature-256 header in non-dev environment")
+    if not x_hub_signature_256:
+        logger.error("Missing X-Hub-Signature-256 header")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Missing signature header",
+        )
+
+    if not verify_meta_signature(raw_body, x_hub_signature_256, app_secret):
+        logger.error("Invalid X-Hub-Signature-256 header")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid signature",
         )
 
     try:

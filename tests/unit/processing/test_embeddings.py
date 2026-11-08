@@ -37,3 +37,4 @@ async def test_embed_chunks_empty_list() -> None:
     result = await embed_chunks(chunks=[], foundry=mock_foundry)
     assert result == []
     mock_foundry.get_embeddings_batch.assert_not_called()
+

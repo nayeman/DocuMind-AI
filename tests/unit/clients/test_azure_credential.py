@@ -26,3 +26,4 @@ def test_resolve_azure_credential_default_fallback() -> None:
     )
     cred = resolve_azure_credential(settings)
     assert isinstance(cred, DefaultAzureCredential)
+

@@ -55,15 +55,25 @@ async def test_webhook_verification_failure() -> None:
 
 
 @pytest.mark.asyncio
-async def test_webhook_post_invalid_signature_in_prod(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Verify POST /webhook returns 403 when signature is invalid in production mode."""
-    monkeypatch.setenv("APP_ENV", "prod")
-
+async def test_webhook_post_invalid_signature() -> None:
+    """Verify POST /webhook returns 403 when signature is invalid."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         response = await client.post(
             "/webhook",
             headers={"X-Hub-Signature-256": "sha256=invalidsignature"},
+            content=b'{"object": "whatsapp_business_account"}',
+        )
+        assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_webhook_post_missing_signature() -> None:
+    """Verify POST /webhook returns 403 when signature header is missing."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        response = await client.post(
+            "/webhook",
             content=b'{"object": "whatsapp_business_account"}',
         )
         assert response.status_code == 403

@@ -37,3 +37,4 @@ def test_verify_meta_signature_missing_or_bad_prefix() -> None:
         verify_meta_signature(raw_body=body, signature_header="invalidprefix", secret=secret)
         is False
     )
+

@@ -14,3 +14,4 @@ def test_configure_logging_sets_level() -> None:
     # Revert back to INFO
     configure_logging(log_level="INFO")
     assert root_logger.level == logging.INFO
+

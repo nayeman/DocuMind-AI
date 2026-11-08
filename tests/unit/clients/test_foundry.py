@@ -63,3 +63,4 @@ async def test_foundry_client_retry_on_rate_limit() -> None:
     result = await client.get_embeddings_batch(["texto de prueba"])
     assert len(result) == 1
     assert mock_openai.embeddings.create.call_count == 2
+

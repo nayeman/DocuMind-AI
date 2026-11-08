@@ -54,3 +54,4 @@ async def test_whatsapp_client_download_media(httpx_mock) -> None:  # type: igno
     client = WhatsAppClient(settings=settings)
     media_bytes = await client.download_media(media_id)
     assert media_bytes == b"%PDF-1.4 sample pdf content"
+

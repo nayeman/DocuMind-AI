@@ -61,3 +61,4 @@ async def test_ai_search_client_indexing_and_search() -> None:
     purged = await client.delete_expired_chunks(max_age_hours=24)
     assert purged == 1
     mock_search_client.delete_documents.assert_called_once_with(documents=[{"chunk_id": "c1"}])
+

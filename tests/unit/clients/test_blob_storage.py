@@ -42,3 +42,4 @@ async def test_blob_storage_client_upload_and_download() -> None:
 
     data = await client.download_document("path/to/blob")
     assert data == b"blob contents"
+

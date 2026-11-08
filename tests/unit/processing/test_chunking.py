@@ -65,3 +65,4 @@ def test_chunk_empty_pages() -> None:
     pages = [{"page": 1, "text": "   "}, {"page": 2, "text": ""}]
     chunks = chunker.chunk(pages=pages, document_id="doc-empty", filename="empty.pdf")
     assert chunks == []
+

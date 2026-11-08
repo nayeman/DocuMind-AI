@@ -7,7 +7,7 @@ Desde cero hasta recibir un mensaje en WhatsApp y ver la respuesta.
 ## Contenido
 
 1. [Pre-requisitos](#1-pre-requisitos)
-2. [Entorno local](#2-entorno-local)
+2. [Validación de código y tests](#2-validacion-de-codigo-y-tests)
 3. [Infraestructura Azure con Terraform](#3-infraestructura-azure-con-terraform)
 4. [Credenciales en Key Vault](#4-credenciales-en-key-vault)
 5. [Imagen Docker → ACR](#5-imagen-docker--acr)
@@ -28,7 +28,6 @@ Desde cero hasta recibir un mensaje en WhatsApp y ver la respuesta.
 | **Docker** | 24+ | `docker version` | [docs.docker.com/get-docker](https://docs.docker.com/get-docker/) |
 | **Python** | 3.13+ | `python --version` | [python.org/downloads](https://www.python.org/downloads/) |
 | **uv** | 0.4+ | `uv --version` | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-| **ngrok** _(solo dev local)_ | cualquiera | `ngrok version` | [ngrok.com/download](https://ngrok.com/download) |
 
 ### 1.2 — Cuenta y suscripción Azure
 
@@ -90,7 +89,7 @@ az ad sp create-for-rbac \
 
 ---
 
-## 2. Entorno local
+## 2. Validación de código y tests
 
 ### 2.1 — Instalar dependencias
 
@@ -99,82 +98,15 @@ cd DocuMindAI
 uv sync
 ```
 
-### 2.2 — Variables de entorno
+### 2.2 — Tests y linters
 
-```bash
-cp .env.example .env
-```
-
-Edita `.env` con los valores de tus recursos Azure y Meta:
-
-```dotenv
-# --- App ---
-APP_ENV=dev
-APP_LOG_LEVEL=INFO
-APP_HOST=0.0.0.0
-APP_PORT=8000
-
-# --- WhatsApp / Meta ---
-WHATSAPP_PHONE_NUMBER_ID=tu_phone_number_id
-WHATSAPP_ACCESS_TOKEN=tu_meta_access_token
-WHATSAPP_APP_SECRET=tu_meta_app_secret
-WHATSAPP_WEBHOOK_VERIFY_TOKEN=token_seguro_para_meta
-WHATSAPP_API_VERSION=v20.0
-
-# --- Azure Storage ---
-AZURE_STORAGE_ACCOUNT_NAME=tustorageaccount
-AZURE_STORAGE_CONTAINER_NAME=documind-documents
-
-# --- Azure AI Search ---
-AZURE_SEARCH_ENDPOINT=https://tusearch.search.windows.net
-AZURE_SEARCH_INDEX_NAME=documind-index
-AZURE_SEARCH_API_VERSION=2024-07-01
-
-# --- Azure OpenAI ---
-AZURE_OPENAI_ENDPOINT=https://tuopenai.openai.azure.com
-AZURE_OPENAI_API_VERSION=2024-08-01-preview
-AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4o
-AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-3-small
-AZURE_OPENAI_EMBEDDING_DIMENSIONS=1536
-
-# --- Azure Identity (dejar vacío si usas az login) ---
-AZURE_CLIENT_ID=
-AZURE_CLIENT_SECRET=
-AZURE_TENANT_ID=
-```
-
-### 2.3 — Tests y linters
+Valida la integridad de la aplicación (42 tests unitarios y de integración con mocks/fakes en memoria):
 
 ```bash
 uv run pytest -v
 uv run ruff check src tests
 uv run mypy src tests
 ```
-
-### 2.4 — Servidor de desarrollo
-
-```bash
-uv run uvicorn documind.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-```bash
-curl http://localhost:8000/health
-# {"status":"healthy","service":"documind-ai","version":"0.1.0"}
-```
-
-### 2.5 — Webhook local con ngrok
-
-Para exponer el servidor local a Meta durante el desarrollo:
-
-```bash
-ngrok http 8000
-```
-
-En [developers.facebook.com](https://developers.facebook.com) → WhatsApp → Configuration:
-- **Callback URL:** `https://<tu-subdominio>.ngrok-free.app/webhook`
-- **Verify Token:** el valor de `WHATSAPP_WEBHOOK_VERIFY_TOKEN`
-
-Haz clic en **Verify and save** y suscríbete al campo `messages`.
 
 ---
 
@@ -252,8 +184,8 @@ terraform output
 | `acr_login_server` | Sección 5 — push imagen |
 | `acr_name` | Sección 5 — az acr login |
 | `key_vault_name` | Sección 4 — cargar secretos |
-| `ai_search_endpoint` | `.env` local |
-| `storage_account_name` | `.env` local |
+| `ai_search_endpoint` | Endpoint del índice de búsqueda |
+| `storage_account_name` | Cuenta de almacenamiento |
 | `container_app_fqdn` | Sección 7 — webhook URL |
 
 ---
