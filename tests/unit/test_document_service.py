@@ -59,6 +59,9 @@ class FakeSearch:
     ) -> list[dict[str, Any]]:
         return []
 
+    async def delete_expired_chunks(self, max_age_hours: int | None = None) -> int:
+        return 0
+
 
 class FakeFoundry:
     async def get_embedding(self, text: str) -> list[float]:

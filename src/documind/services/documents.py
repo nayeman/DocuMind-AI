@@ -117,6 +117,7 @@ class DocumentService:
         try:
             await self.search.ensure_index()
             await self.search.index_chunks(embedded_chunks, user_phone)
+            await self.search.delete_expired_chunks()
         except AISearchError as exc:
             raise DocumentProcessingError(f"Indexing failed for '{clean_filename}': {exc}") from exc
 
